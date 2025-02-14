@@ -20,9 +20,8 @@ return new class extends Migration
     
             // Foreign keys
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
-            // entity_id references 'id' on 'projects' but we won't enforce the foreign key
-            // to keep it flexible for future expansions.
-            // $table->foreign('entity_id')->references('id')->on('projects')->onDelete('cascade');
+            // entity_id references 'id' on 'projects' 
+            $table->foreign('entity_id')->references('id')->on('projects')->onDelete('cascade');
         });
     }
     
