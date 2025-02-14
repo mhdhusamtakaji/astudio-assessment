@@ -21,9 +21,9 @@ class AttributeValue extends Model
         return $this->belongsTo(Attribute::class);
     }
 
-    // if we decide to create the forign key, here is a direct relationship to Project
-    // public function project()
-    // {
-    //     return $this->belongsTo(Project::class, 'entity_id');
-    // }
+    // direct relationship to Project
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'entity_id');
+    }
 }

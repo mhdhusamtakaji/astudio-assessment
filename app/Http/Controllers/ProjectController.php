@@ -28,27 +28,109 @@ class ProjectController extends Controller
     {
         $query = Project::query();
 
-        // EAV filtering example
-        if ($request->has('attribute_name') && $request->has('attribute_value')) {
-            $attrName  = $request->input('attribute_name');
-            $attrValue = $request->input('attribute_value');
+        // 1. Check if 'filters' is present in the query string
+        $filters = $request->query('filters', []);
 
-            // Locate the corresponding Attribute by name
-            $attribute = Attribute::where('name', $attrName)->first();
-            if ($attribute) {
-                // Filter projects that have an AttributeValue matching the given value
-                $query->whereHas('attributeValues', function ($q) use ($attribute, $attrValue) {
-                    $q->where('attribute_id', $attribute->id)
-                      ->where('value', $attrValue);
-                });
+        // 2. Loop through each filter
+        foreach ($filters as $field => $condition) {
+            // $field = 'name' or 'department' or 'created_at', etc.
+            // $condition might be something like ['=' => 'ProjectA'] or ['like' => 'IT']
+
+            // a) If $condition is not an array or empty, skip
+            if (!is_array($condition) || empty($condition)) {
+                continue;
+            }
+
+            // b) We only expect a single operator => value pair (e.g., ['=' => 'ProjectA'])
+            //   If there's more than one, you might extend logic or loop over them
+            $operator = array_key_first($condition);   // e.g. '=' or 'like'
+            $value    = $condition[$operator];         // e.g. 'ProjectA'
+
+            // c) Decide if $field is a "regular column" or an EAV attribute.
+            //    E.g. check if the column exists in the 'projects' table schema or not.
+            //    For simplicity, let’s do an in_array check of known columns 
+            //    or rely on a separate method (or reflection). For a production app,
+            //    you might want a more robust check.
+            $isRegularColumn = in_array($field, [
+                'id', 'name', 'status', 'created_at', 'updated_at'
+            ]);
+
+            // d) Apply the filter
+            if ($isRegularColumn) {
+                // Filter by a native column on the projects table
+                $this->applyRegularColumnFilter($query, $field, $operator, $value);
+            } else {
+                // Filter by EAV attribute
+                $this->applyEavFilter($query, $field, $operator, $value);
             }
         }
 
-        // Retrieve all matching projects, eager loading attribute values
-        $projects = $query->get()->load('attributeValues');
+        // 3. Finally, fetch results (with EAV relationship loaded)
+        $projects = $query->get()->load('attributeValues.attribute');
 
         return response()->json($projects, 200);
     }
+
+    /**
+     * Apply a filter to a native project column.
+     */
+    private function applyRegularColumnFilter($query, $column, $operator, $value)
+    {
+        // Map textual operators to actual SQL
+        switch (strtolower($operator)) {
+            case '=':
+            case '>':
+            case '<':
+                // e.g. $query->where('name', '=', 'ProjectA')
+                $query->where($column, $operator, $value);
+                break;
+            case 'like':
+                // Convert 'like' to SQL wildcard
+                $query->where($column, 'LIKE', "%{$value}%");
+                break;
+            default:
+                // You might throw an exception or ignore unknown operators
+                // e.g. $query->where($column, $value)
+                break;
+        }
+    }
+
+    /**
+     * Apply a filter to an EAV attribute via a join on attributeValues.
+     * We must find an Attribute record by $field (the attribute name).
+     */
+    private function applyEavFilter($query, $attributeName, $operator, $value)
+    {
+        // 1. Locate the attribute by 'name' in the attributes table
+        $attribute = \App\Models\Attribute::where('name', $attributeName)->first();
+        if (!$attribute) {
+            // No such attribute => optionally skip or return no results
+            // We'll skip if the attribute is not found
+            return;
+        }
+
+        // 2. We'll use whereHas('attributeValues') with the operator
+        switch (strtolower($operator)) {
+            case '=':
+            case '>':
+            case '<':
+                $query->whereHas('attributeValues', function ($q) use ($attribute, $operator, $value) {
+                    $q->where('attribute_id', $attribute->id)
+                    ->where('value', $operator, $value);
+                });
+                break;
+            case 'like':
+                $query->whereHas('attributeValues', function ($q) use ($attribute, $value) {
+                    $q->where('attribute_id', $attribute->id)
+                    ->where('value', 'LIKE', "%{$value}%");
+                });
+                break;
+            default:
+                // Unknown operator => ignore or throw an exception
+                break;
+        }
+    }
+
 
     /**
      * GET /api/projects/{project}
