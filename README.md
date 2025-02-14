@@ -1,5 +1,4 @@
-# ASTUDIO Assessment
-* MHD HUSAM TAKAJI
+# ASTUDIO Assessment - MHD HUSAM TAKAJI
 
 Welcome to the ASTUDIO Assessment repository. This project demonstrates a Laravel-based application for managing Projects, Timesheets, and dynamic (EAV) attributes, complete with authentication and filtering.
 
@@ -30,3 +29,12 @@ A copy of the `.env` file (or `.env.example`) is included for convenience:
 ---
 
 **Thank you for checking out this repository!** For any questions, refer to the detailed `readme.pdf` or feel free to contact the project maintainer.
+
+
+MHD HUSAM TAKAJI
+Software Engineer
+Dubai, UAE
++971 505890129
+LinkedIn: [www.linkedin.com/in/mhd-husam-takaji-a1a074289](https://www.linkedin.com/in/mhd-husam-takaji-a1a074289)
+Github: [mhdhusamtakaji (MHD HUSAM TAKAJI) (github.com)](https://github.com/mhdhusamtakaji)
+Portfolio: [ENG. MHD HUSAM TAKAJI](https://www.mhdhusamtakaji.com/)
