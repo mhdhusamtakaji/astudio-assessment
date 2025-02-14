@@ -27,4 +27,15 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    protected function unauthenticated($request, \Illuminate\Auth\AuthenticationException $exception)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        
+        return response()->json(['message' => 'Unauthorized'], 401);
+        // return redirect()->guest(route('login'));
+    }
+
 }
